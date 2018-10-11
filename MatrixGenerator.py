@@ -32,12 +32,13 @@ def CombinationGenerator(features,arith):
 features = list(range(len(x_train[0])))
 arith = ['+','*']
 feat = ['A','B','C','D']
-
+all_combinations = []
 all_combination = CombinationGenerator(feat,arith)
 for i in range(len(all_combination)):
     all_combin_set = set(all_combination[i])
-    all_combination[i] = list(all_combin_set)
+    all_combinations.append(list(all_combin_set))
 
 for i in range(len(all_combination)):
     print(len(all_combination[i]))
+
 
