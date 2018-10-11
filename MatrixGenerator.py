@@ -15,21 +15,17 @@ def CombinationGenerator(features,arith):
     upper_limit  = min(5,len(features)+1)
     for i in range(2,upper_limit):
         sub_arith = arith
-        print(sub_arith)
-        s = len(arith)
-        for k in range(i-2):
-            p = len(sub_arith)
-            for x in range(p):
-                for y in range(s):
-                    sub_arith.append(sub_arith[x] + arith[y]))
         # for k in range(i-2):
-        #     for ari in arith:
-        #         sub_arith.append(ari) 
-
+        #     for l in range(len(arith)):
+        #         sub_sub_arith = arith
+        #     sub_arith = sub_arith + 
+        sub_arith = list(combinations(arith*(i-1),i-1))
+        
         sub = list(combinations(features,i))
-        print(list(sub_arith))
+        
         combis.append(list(product(sub,sub_arith)))
-
+    # for o in range(len(sub_arith)):
+    #         print(len(sub_arith[o]))
     return combis   
 
 (x_train, y_train), (x_test, y_test) = boston_housing.load_data()
@@ -38,6 +34,9 @@ arith = ['+','*']
 feat = ['A','B','C','D']
 
 all_combination = CombinationGenerator(feat,arith)
+for i in range(len(all_combination)):
+    all_combin_set = set(all_combination[i])
+    all_combination[i] = list(all_combin_set)
 
 for i in range(len(all_combination)):
     print(len(all_combination[i]))
