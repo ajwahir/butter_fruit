@@ -13,7 +13,7 @@ from itertools import product
 
 def CombinationGenerator(features,arith):
     combis = []
-    upper_limit  = min(5,len(features)+1)
+    upper_limit  = min(4,len(features)+1)
     for i in range(2,upper_limit):
         sub_arith = arith
         # for k in range(i-2):
@@ -31,7 +31,7 @@ def CombinationGenerator(features,arith):
 
 def PermutationGenerator(features,arith):
     permu = []
-    upper_limit  = min(5,len(features)+1)
+    upper_limit  = min(4,len(features)+1)
     for i in range(2,upper_limit):
         sub_arith = arith
         # for k in range(i-2):
@@ -89,7 +89,33 @@ def applyFeatureDrop(x_train,permu):
                 temp = temp + x_train[k][col[j+1]]
         z[k][0] = temp    
     x_train = np.append(x_train, z, axis=1)
-    x_train = np.delete(x_train,[permu[0][0]])
+    x_train = np.delete(x_train,[permu[0][0]],axis = 1)
+    return x_train
+
+def applyFeatureMultiDrop(x_train,permu_list):
+    for permu in permu_list :
+        s = len(x_train)
+        z = np.zeros((s,1))
+        col = permu[0]
+        # print("col",combination)
+        l = len(col)
+        sign = permu[1]
+        print(col)
+        for k in range(s):
+            
+            # print("jo",x_train[k][col[0]])
+            temp = x_train[k][col[0]]
+            # print("OhMYGod")
+            for j in range(l-1):
+                # if(k == 0):
+                    # print(x_train[k][col[j+1]])
+                if(sign[j] == '*'):
+                    temp = temp * x_train[k][col[j+1]]
+                elif(sign[j] == '+'):
+                    temp = temp + x_train[k][col[j+1]]
+            z[k][0] = temp    
+        x_train = np.append(x_train, z, axis=1)
+        x_train = np.delete(x_train,[permu[0][0]],axix = 1)
     return x_train
 
 (x_train, y_train), (x_test, y_test) = boston_housing.load_data()
@@ -145,7 +171,33 @@ def LearnAndPredict(train,all_combination):
     final_scores = []
     for i in range(len(all_combination)):
         # print('all',all_combination)
-        x_train = applyFeature(train,all_combination[i])
+        
+        x_train = applyFeatureDrop(train,all_combination[i])
+        kf = KFold(n_splits=K, random_state = 3228, shuffle = True)
+        mse_scores = []
+        
+        for train_index,test_index in kf.split(x_train):
+            
+            train_x,valid_x = x_train[train_index],x_train[test_index]
+            # print("hellll")
+            train_y,valid_y = y_train[train_index],y_train[test_index]
+            regr = linear_model.LinearRegression()
+            regr.fit(train_x, train_y)
+            pred = regr.predict(valid_x)
+            ms_error = mse(valid_y,pred)
+            mse_scores.append(ms_error) 
+        mse_mean = sum(mse_scores)/len(mse_scores)
+        final_scores.append(mse_mean)
+        print("Final Score : ",mse_mean)
+    return final_scores
+
+def LearnAndPredictMulti(train,all_combination):
+    print("Started Learning")
+    K = 3
+    final_scores = []
+    for i in range(len(all_combination)):
+        # print('all',all_combination)
+        x_train = applyFeatureMultiDrop(train,all_combination[i])
         kf = KFold(n_splits=K, random_state = 3228, shuffle = True)
         mse_scores = []
         for train_index,test_index in kf.split(x_train):
@@ -162,9 +214,17 @@ def LearnAndPredict(train,all_combination):
     return final_scores
 
 # final_scores = LearnAndPredict(x_train,all_combination,x_test, y_test)
-final_scores = LearnAndPredict(x_train,all_combination)
-result_metric = pd.DataFrame({'error':final_scores,'feature':all_combination})
-good_metric = result_metric.ix[result_metric['error'].idxmin()]
+good_metric = pd.DataFrame(columns = ['error','feature'])
+for i in range(len(x_train[0])):
+    final_scores = LearnAndPredict(x_train,all_combination)
+    # perms = list(combinations(all_combination,2))
+    # final_scores = LearnAndPredictMulti(x_train,perms)
+    result_metric = pd.DataFrame({'error':final_scores,'feature':all_combination})
+    good_metric = good_metric.append(result_metric.iloc[result_metric['error'].idxmin()])
+    x_train = applyFeatureDrop(x_train,good_metric.iloc[0]['feature'])
+
+best_metric = good_metric.ix[good_metric['error'].idxmin()]
+
 
 # kf = KFold(n_splits=3, random_state = 3228, shuffle = True)
 # mse_scores = []
